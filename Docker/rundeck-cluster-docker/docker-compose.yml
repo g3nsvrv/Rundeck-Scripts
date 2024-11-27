@@ -112,6 +112,9 @@ services:
     environment:
       NGINX_HOSTNAME: ${RD_URL}
       NGINX_PORT: ${NGINX_PORT}
+    depends_on:
+      - rundeck_01
+      - rundeck_02
   node_01:
     hostname: node_01
     build:
