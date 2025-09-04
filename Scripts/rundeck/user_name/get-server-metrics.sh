@@ -15,13 +15,16 @@ echo -e "\nRundeck password:"; read -r rundeckPass
 curlOptions="-s"
 cookie="cookie"
 #############################################
-rundeckApiVersion="17"
+rundeckApiVersion="35"
 rundeckApiFormat="json"
 rundeckJobFormat="yaml"
 #############################################
 
 curl "$curlOptions" -X "POST" -d "j_username=$rundeckUser" -d "j_password=$rundeckPass" -c "$cookie" -b "$cookie" "$rundeckServer"/j_security_check
 
-curl "$curlOptions" -X "GET" -b "$cookie" "$rundeckServer"/api/"$rundeckApiVersion"/metrics/metrics | jq .
+curl "$curlOptions" -X "GET" -b "$cookie" -c "$cookie" "$rundeckServer"/api/"$rundeckApiVersion"/metrics/metrics | jq .
+
+curl "$curlOptions" -X "GET" -b "$cookie" -c "$cookie" "$rundeckServer"/api/"$rundeckApiVersion"/system/info | jq .
+
 
 rm -f "$cookie"
