@@ -1,0 +1,125 @@
+---
+## Rundeck Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  # a custom shortened service name works around a limitation
+  # in the ALB: the target group name is limited in length
+  # (we use the environment and app labels to identify the deployment)
+  name: rundeckpro-cluster
+  namespace: run2596
+  labels:
+    app: rundeckpro-cluster
+    environment: support
+  annotations:
+    service.beta.kubernetes.io/azure-dns-label-name: run2596-rba
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: RUN-2596
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 4440
+      protocol: TCP
+  selector:
+    app: rundeckpro-cluster
+#  externalTrafficPolicy: Local
+#  sessionAffinity: ClientIP
+
+---
+## Rundeck Ingress
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rundeckpro-cluster-ingress
+  namespace: run2596
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-name: JSESSIONID
+spec:
+  ingressClassName: nginx
+  rules:
+  - host:
+    http:
+      paths:
+      - backend:
+          service:
+            name: rundeckpro-cluster
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+
+---
+## Rundeck Deploy
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rundeckpro-cluster
+  namespace: run2596
+  labels:
+    app: rundeckpro-cluster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rundeckpro-cluster
+  template:
+    metadata:
+      labels:
+        app: rundeckpro-cluster
+    spec:
+      containers:
+      - name: rundeckpro
+        image: rundeckpro/enterprise:5.5.0
+        # volumeMounts:
+        #  - mountPath: /home/rundeck/server/config/realm.properties
+        #    name: realm
+        #    subPath: realm.properties
+        env:
+        - name: RUNDECK_GRAILS_URL
+          value: http://51.8.131.28
+        - name: RUNDECK_SERVER_PORT
+          value: "4440"
+        ## Database
+        - name: RUNDECK_DATABASE_DRIVER
+          value: org.mariadb.jdbc.Driver
+        - name: RUNDECK_DATABASE_URL
+          value: jdbc:mysql://mysql:3306/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+        - name: RUNDECK_DATABASE_USERNAME
+          value: rundeckuser
+        - name: RUNDECK_DATABASE_PASSWORD
+          value: RundeckPassword
+        # storage key encrypt
+        - name: RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD
+          value: abc123
+        - name: RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD
+          value: abc123
+        - name: RUNDECK_PLUGIN_EXECUTIONFILESTORAGE_NAME
+          value: testss
+        ports:
+        - containerPort: 4440
+        readinessProbe:
+          tcpSocket:
+            port: 4440
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          failureThreshold: 10
+          successThreshold: 3
+        resources:
+          requests:
+            cpu: 0
+          limits:
+            memory: 2G
+            cpu: 2
+            ephemeral-storage: 4G
+      # volumes:
+      # - name: realm
+      #   secret:
+      #     secretName: realm-properties
+      #     items:
+      #     - key: realm.properties
+      #       path: realm.properties

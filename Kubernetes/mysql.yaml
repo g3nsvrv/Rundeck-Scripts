@@ -1,0 +1,94 @@
+---
+## MySQL Volume
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: mysql-pv
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  capacity:
+    storage: 3G
+  hostPath:
+    path: /tmp/mysql-data
+
+---
+## MySQL Claim
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mysql-pvc
+  namespace: run2596
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 3G
+  volumeName: mysql-pv
+  storageClassName: ""
+
+---
+## MySQL Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: run2596
+spec:
+  ports:
+    - port: 3306
+      targetPort: 3306
+      protocol: TCP
+  selector:
+    app: mysql
+  type: LoadBalancer
+
+---
+## MySQL Deploy
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: run2596
+  labels:
+    app: mysql
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:latest
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: Pa$$w0rd!
+        - name: MYSQL_DATABASE
+          value: rundeck
+        - name: MYSQL_USER
+          value: rundeckuser
+        - name: MYSQL_PASSWORD
+          value: RundeckPassword
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc

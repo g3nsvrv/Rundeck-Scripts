@@ -1,0 +1,62 @@
+#test azure login
+az login
+
+#create local docker image:
+docker build . -t ansible-pywinrm:3.3.0-1
+docker run ansible-pywinrm:3.3.0-1
+
+my info myResourceGroup=$resource-group
+my info <acrName>=csecontainerrepo
+my info myAKSCluster=$k8-name
+
+#create azure container registry:
+az group create --name $resource-group --location eastus
+az acr create --resource-group $resource-group --name csecontainerrepo --sku Basic
+
+#login in to container registry:
+az acr login --name csecontainerrepo
+
+#query the login.server name
+az acr list --resource-group $resource-group --query "[].{acrLoginServer:loginServer}" --output table
+#output csecontainerrepo.azurecr.io
+
+#tag the local docker image
+docker tag ansible-pywinrm:3.3.0-1 csecontainerrepo.azurecr.io/rundeck-ansible-pywinrm:3.3.0-1
+
+#push image to registry
+docker push csecontainerrepo.azurecr.io/rundeck-ansible-pywinrm:3.3.0-1
+
+#check image list
+az acr repository list --name csecontainerrepo --output table
+az acr repository show-tags --name csecontainerrepo --repository rundeck-ansible-pywinrm --output table
+
+#create k8s cluster:
+az aks create --resource-group $resource-group --name $k8-name --node-count 2 --generate-ssh-keys --attach-acr csecontainerrepo
+
+#install k8s cli NO IF kubectl IS INSTALLED ALREADY
+az aks install-cli
+
+#connect to cluster
+az aks get-credentials --resource-group $resource-group --name $k8-name
+
+#get token to use on rundeck k8s plugins
+az aks get-credentials -g $resource-group -n $k8-name -a -f -|grep token
+    token: $token
+url: https://$k8-instance:port
+
+#check nodes:
+kubectl get nodes
+
+#apply yaml
+kubectl apply -f rundeckpro.yaml
+
+# Create a namespace for your ingress resources
+kubectl create namespace k8singress-basic
+
+# Add the official stable repository
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+
+# Use Helm to deploy an NGINX ingress controller
+helm install nginx-ingress stable/nginx-ingress --namespace k8singress-basic --set controller.replicaCount=2 --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux
+
+server url: az aks show --name <cluster_name> --resource-group <resource_group_name>

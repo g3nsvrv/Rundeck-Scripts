@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rundeckpro-cluster
+  namespace: run2596
+  labels:
+    app: rundeckpro-cluster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rundeckpro-cluster
+  template:
+    metadata:
+      labels:
+        app: rundeckpro-cluster
+    spec:
+      containers:
+      - name: rundeckpro
+        image: rundeckpro/enterprise:5.5.0
+        # volumeMounts:
+        #  - mountPath: /home/rundeck/server/config/realm.properties
+        #    name: realm
+        #    subPath: realm.properties
+        env:
+        - name: RUNDECK_GRAILS_URL
+          value: "http://48.211.225.158"
+        - name: RUNDECK_SERVER_PORT
+          value: "4440"
+        ## Database
+        - name: RUNDECK_DATABASE_DRIVER
+          value: "org.mariadb.jdbc.Driver"
+        - name: RUNDECK_DATABASE_URL
+          value: "jdbc:mysql://run-2596-db.mysql.database.azure.com/rundeck?autoReconnect=true&useSSL=false"
+        - name: RUNDECK_DATABASE_USERNAME
+          value: "rundeckuser"
+        - name: RUNDECK_DATABASE_PASSWORD
+          value: "RundeckPa$$w0rd"
+        # storage key encrypt
+        - name: RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD
+          value: "abc123"
+        - name: RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD
+          value: "abc123"
+        ports:
+        - containerPort: 4440
+        readinessProbe:
+          tcpSocket:
+            port: 4440
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          failureThreshold: 10
+          successThreshold: 3
+        resources:
+          requests:
+            cpu: "0"
+          limits:
+            memory: '2Gi'
+            cpu: "2"
+            ephemeral-storage: "4Gi"
+      # volumes:
+      # - name: realm
+      #   secret:
+      #     secretName: realm-properties
+      #     items:
+      #     - key: realm.properties
+      #       path: realm.properties

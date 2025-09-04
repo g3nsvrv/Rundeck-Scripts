@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise-runner
+  namespace: run2596
+  labels:
+    app: enterprise-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: enterprise-runner
+      cluster: run-2596
+  template:
+    metadata:
+      labels:
+        app: enterprise-runner
+        cluster: run-2596
+    spec:
+      containers:
+      - image: rundeckpro/runner:5.7.0
+        imagePullPolicy: Always
+        name: enterprise-runner
+        env:
+        - name: RUNNER_RUNDECK_CLIENT_ID
+          value: "6197921d-42ca-4daa-8364-745ef795f157"
+        - name: RUNNER_RUNDECK_SERVER_TOKEN
+          value: "3zwMqXoZIt0uuzF2ozfbp0kZnwglhaoD"
+        - name: RUNNER_RUNDECK_SERVER_URL
+          value: "https://rdcsm.stg.runbook.pagerduty.cloud"
+      restartPolicy: Always

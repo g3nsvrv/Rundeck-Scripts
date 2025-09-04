@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rundeckpro-cluster-ingress
+  namespace: run2596
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-name: JSESSIONID
+spec:
+  ingressClassName: nginx
+  rules:
+  - host:
+    http:
+      paths:
+      - backend:
+          service:
+            name: rundeckpro-cluster
+            port:
+              number: 80
+        path: /
+        pathType: Prefix

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # a custom shortened service name works around a limitation
+  # in the ALB: the target group name is limited in length
+  # (we use the environment and app labels to identify the deployment)
+  name: rundeckpro-cluster
+  namespace: run2596
+  labels:
+    app: rundeckpro-cluster
+    environment: cse
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 4440
+      protocol: TCP
+  selector:
+    app: rundeckpro-cluster
+#  externalTrafficPolicy: Local
+#  sessionAffinity: ClientIP

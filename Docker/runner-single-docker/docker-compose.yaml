@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  runner:
+    hostname: runner
+    build:
+      context: ${RUNNER_CONTEXT}
+      args:
+        IMAGE: ${RUNNER_IMAGE}
+    env_file:
+    - runner/environment.properties
+    platform: linux/amd64
