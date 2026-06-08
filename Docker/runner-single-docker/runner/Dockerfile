@@ -7,8 +7,12 @@ ARG RUNNER_TOKEN
 
 USER root
 
+RUN printf 'Acquire::http::Pipeline-Depth "0";\nAcquire::http::No-Cache "true";\nAcquire::BrokenProxy "true";\n' > /etc/apt/apt.conf.d/99fixbadproxy
+RUN rm -rf /var/lib/apt/lists/*
+RUN apt clean
 RUN apt update
-RUN apt install -y iputils-ping curl jq python3 python3-pip python3-dev libkrb5-dev
+RUN apt install -y iputils-ping curl jq git
+RUN apt install -y python3 python3-pip python3-dev libkrb5-dev
 RUN python3 -m pip install wheel pywinrm pywinrm[credssp] pywinrm[kerberos] requests requests-kerberos pexpect
 
 USER runner
