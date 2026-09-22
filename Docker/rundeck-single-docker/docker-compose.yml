@@ -33,6 +33,6 @@ services:
     volumes:
       - db-data:${DB_PATH}
     ports:
-      - ${DB_PORT}:5432
+      - ${DB_PORT}:${DB_PORT}
     env_file:
       - ${DB_ENV}

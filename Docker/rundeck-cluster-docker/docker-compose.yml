@@ -1,6 +1,6 @@
 volumes:
-  db-data:
   minio-data:
+  db-data:
 
 networks:
   internal:
@@ -89,9 +89,9 @@ services:
       - minio
     entrypoint: >
       /bin/bash -c "
-      mc config host add --api s3v4 minio ${RD_STORAGE_ENDPOINT}:${MINIO_PORT} ${MINIO_USER} ${MINIO_PASS};
-      mc mb minio/${RD_STORAGE_BUCKET};
-      mc policy set public minio/${RD_STORAGE_BUCKET};
+      mc alias set minio ${RD_STORAGE_ENDPOINT}:${MINIO_PORT} ${MINIO_USER} ${MINIO_PASS} --api s3v4;
+      mc mb --ignore-existing minio/${RD_STORAGE_BUCKET};
+      mc anonymous set public minio/${RD_STORAGE_BUCKET};
       curl -s -D - ${RD_STORAGE_ENDPOINT} | grep  X-Amz-Bucket-Region | sed 's/X-Amz-Bucket-Region/Region/g'
       "
   nginx:
