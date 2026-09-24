@@ -54,7 +54,8 @@ else
     "description": "Test Runner for this environment",
     "assignedProjects": {
     },
-    "tagNames": "runner, docker, linux"
+    "tagNames": "runner, docker, linux",
+    "replicaType": "ephemeral"
   }
   ')
 
